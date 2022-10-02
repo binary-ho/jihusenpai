@@ -10,8 +10,8 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class GrassParser {
-    public String getHtmlSource(String url){
+public class GrassParserService {
+    private String getHtmlSource(String url){
         try {
             URL targetUrl = new URL(url);
             BufferedReader reader = new BufferedReader(new InputStreamReader(targetUrl.openStream(), "UTF-8"));
@@ -30,11 +30,16 @@ public class GrassParser {
         return null;
     }
 
-    public int getDayContributionCount(String userGitHubId, String dateString) {
+    private Document getHTMLDocument(String userGitHubId) {
         String htmlSource = this.getHtmlSource("https://github.com/" + userGitHubId);
-        Document document = Jsoup.parse(htmlSource);
+        return Jsoup.parse(htmlSource);
+    }
+
+    private int getContributionCount(String userGitHubId, String dateString) {
+        Document document = this.getHTMLDocument(userGitHubId);
         String calenderClassString = ".ContributionCalendar-day";
-//        String dateString = "2022-09-29";
+
+        DateService dateService = new DateService();
         String rectDateString = "rect[data-date=" + dateString + "]";
         String dataCountAttrString = "data-count";
 
@@ -43,22 +48,15 @@ public class GrassParser {
         return  Integer.parseInt(dayContributionString);
     }
 
-    public int getDayContributionCount(String userGitHubId) {
-        String htmlSource = this.getHtmlSource("https://github.com/" + userGitHubId);
-        Document document = Jsoup.parse(htmlSource);
-        String calenderClassString = ".ContributionCalendar-day";
-        
-        // 오늘거 가져오기
-        String dateString = "2022-09-29";
-        String rectDateString = "rect[data-date=" + dateString + "]";
-        String dataCountAttrString = "data-count";
-
-        Elements dayComponent = document.select(calenderClassString).select(rectDateString);
-        String dayContributionString = dayComponent.attr(dataCountAttrString);
-        return  Integer.parseInt(dayContributionString);
+    public int getTodayContributionCount(String userGitHubId) {
+        DateService dateService = new DateService();
+        String dateString = dateService.getTodayDateString();
+        return getContributionCount(userGitHubId, dateString);
     }
-    
-    public void getDayContributionCountAll() {}
 
-
+    public int getYesterdayContributionCount(String userGitHubId) {
+        DateService dateService = new DateService();
+        String dateString = dateService.getYesterdayDateString();
+        return getContributionCount(userGitHubId, dateString);
+    }
 }
